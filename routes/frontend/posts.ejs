@@ -1,0 +1,14 @@
+<% for (const post of posts) { %>
+<%- await include('./routes/frontend/post.ejs', { post }) %>
+<% } %>
+
+<% if (posts.length === 0) { %>
+    <p>There is nothing being said at this time...</p>
+<% } %>
+
+<br />
+
+<% if (posts.length) { %>
+    <a href="/?after=<%= posts[0].createdAt.toISOString() %>">Prev</a>
+    <a href="/?before=<%= posts[posts.length - 1 ].createdAt.toISOString() %>">Next</a>
+<% } %>

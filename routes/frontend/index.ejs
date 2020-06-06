@@ -1,0 +1,24 @@
+<%- await include('./routes/frontend/header.ejs', { currentUser }) %>
+
+<% if (currentUser) { %>
+    <form
+        method="POST"
+        action="/api/v1/createpost"
+        enctype="multipart/form-data"
+        style="display: flex; flex-direction: column;"
+    >
+        <p><em>Share something with the world.</em></p>
+        <textarea name="content" style="width: 100%; min-height: 80px;"></textarea>
+        <button style="align-self: end;">Post</button>
+    </form>
+<% } %>
+
+<section>
+    <p><em>The world is saying:</em></p>
+    <br />
+
+    <%- await include('./routes/frontend/posts.ejs', { posts }) %>
+
+</section>
+
+<%- await include('./routes/frontend/footer.ejs') %>

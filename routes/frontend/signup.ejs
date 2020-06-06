@@ -1,0 +1,14 @@
+<%- await include('./routes/frontend/header.ejs', { currentUser: null }) %>
+
+<form method="POST" action="/api/v1/createuser" enctype="multipart/form-data">
+    <h2>Signup</h2>
+    <label> Username:
+        <input type="text" name="username" />
+    </label>
+    <label> Password:
+        <input type="password" name="password" />
+    </label>
+    <button>Signup</button>
+</form>
+
+<%- await include('./routes/frontend/footer.ejs') %>

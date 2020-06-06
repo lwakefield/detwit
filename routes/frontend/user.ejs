@@ -1,0 +1,25 @@
+<%- await include('./routes/frontend/header.ejs', { currentUser }) %>
+
+<h2><%= user.username %></h2>
+
+<a href="/u/<%= user.username %>/feed"><%= user.username %>'s feed</a>
+
+<% if (user.isFollowing) { %>
+  <form method="POST" action="/api/v1/createfollow" enctype="multipart/form-data">
+    <input type="hidden" name="userId" value="<%= user.userId %>" />
+    <button>Follow</button>
+  </form>
+<% } else {  %>
+  <form method="POST" action="/api/v1/deletefollow" enctype="multipart/form-data">
+    <input type="hidden" name="userId" value="<%= user.userId %>" />
+    <button>Follow</button>
+  </form>
+<% }  %>
+
+<br />
+<p><em>This is what <%= user.username %> is saying.</em></p>
+<br />
+
+<%- await include('./routes/frontend/posts.ejs', { posts }) %>
+
+<%- await include('./routes/frontend/footer.ejs') %>

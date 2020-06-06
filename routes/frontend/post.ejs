@@ -1,0 +1,26 @@
+<div style="
+     padding-top: 10px;
+     padding-bottom: 10px;
+     border-bottom: 1px solid #dddddd;
+  ">
+  <div>
+    <em><a href="/u/<%= post.author.username %>">
+      <%= post.author.displayName || post.author.username %>
+    </a>
+    said:</em> <%= post.content %>
+  </div>
+
+  <% if (!post.myReactions['❤️']) { %>
+  <form method="POST" action="/api/v1/createpostreaction" enctype="multipart/form-data">
+    <input type="hidden" name="postId" value="<%= post.postId %>" />
+    <input type="hidden" name="type" value="❤️"/>
+    <button>❤️ (<%= post.reactionCounts['❤️'] || 0 %>)</button>
+  </form>
+  <% } else { %>
+    <form method="POST" action="/api/v1/deletepostreaction" enctype="multipart/form-data">
+      <input type="hidden" name="postId" value="<%= post.postId %>" />
+      <input type="hidden" name="type" value="❤️"/>
+      <button style="align-self: end;">❤️ (<%= post.reactionCounts['❤️'] || 0 %>)</button>
+    </form>
+  <% } %>
+</div>

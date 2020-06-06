@@ -1,0 +1,57 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+
+    <title>Detwit - simple social media</title>
+    <meta name="description" content="Simple social media">
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body, html {
+        font-family: "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif
+      }
+      body {
+        max-width: 480px;
+        margin: 0 auto;
+      }
+      h1, h2, h3, h4, h5, h6, p {
+        margin: 0;
+        padding: 0;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+
+  </head>
+
+  <body>
+
+    <nav
+      style="display: flex;
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    ">
+      <h1><a href="/">Detwit</a></h1>
+      <div>
+        <% if (currentUser) { %>
+          <form method="POST" action="/api/v1/deletesession" enctype="multipart/form-data">
+            <button>Signout</button>
+          </form>
+        <% } else { %>
+          <a href="/signup">Signup</a>
+          <a href="/signin">Signin</a>
+        <% } %>
+      </div>
+    </nav>
