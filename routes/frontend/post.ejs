@@ -2,6 +2,7 @@
      padding-top: 10px;
      padding-bottom: 10px;
      border-bottom: 1px solid #dddddd;
+     word-wrap: break-word;
   ">
   <div>
     <em><a href="/u/<%= post.author.username %>">
@@ -14,7 +15,7 @@
   <form method="POST" action="/api/v1/createpostreaction" enctype="multipart/form-data">
     <input type="hidden" name="postId" value="<%= post.postId %>" />
     <input type="hidden" name="type" value="❤️"/>
-    <button>❤️ (<%= post.reactionCounts['❤️'] || 0 %>)</button>
+    <button style="align-self: end;">♡(<%= post.reactionCounts['❤️'] || 0 %>)</button>
   </form>
   <% } else { %>
     <form method="POST" action="/api/v1/deletepostreaction" enctype="multipart/form-data">

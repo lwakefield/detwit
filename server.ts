@@ -24,6 +24,7 @@ requestHandlers.set(/^POST \/api\/v1\/createpostreaction$/, apiRoutes.createPost
 requestHandlers.set(/^POST \/api\/v1\/deletepostreaction$/, apiRoutes.deletePostReaction);
 
 requestHandlers.set(/^GET \/$/,                             frontendRoutes.index);
+requestHandlers.set(/^GET \/all$/,                          frontendRoutes.all);
 requestHandlers.set(/^GET \/signup$/,                       frontendRoutes.signup);
 requestHandlers.set(/^GET \/signin$/,                       frontendRoutes.signin);
 requestHandlers.set(/^GET \/u\/\w+$/,                       frontendRoutes.user);
@@ -31,30 +32,39 @@ requestHandlers.set(/^GET \/u\/\w+\/feed$/,                 frontendRoutes.userF
 
 await db.init();
 
-for await (const req of server) {
-    const signature = req.method + ' ' + getUrl(req).pathname;
+for await (const _req of server) {
+    const req = new Request(_req.url, {
+      method: _req.method,
+      body: await Deno.readAll(_req.body),
+      headers: _req.headers,
+    });
 
-    let res = null;
-    log({ message: 'Received HTTP Request', signature });
+    try {
+        const signature = req.method.toUpperCase() + ' ' + getUrl(req).pathname;
 
+        let res = null;
+        log({ message: 'Received HTTP Request', signature });
 
-    for (const [rgx, handler] of requestHandlers.entries()) {
-        if (rgx.test(signature)) {
-            try {
-                res = await handler(req);
-            } catch (e) {
-                console.error(e);
-                log({ message: 'Error processing request', error: e.stack });
-                res = { status: 500 };
+        for (const [rgx, handler] of requestHandlers.entries()) {
+            if (rgx.test(signature)) {
+                try {
+                    res = await handler(req);
+                } catch (e) {
+                    console.error(e);
+                    log({ message: 'Error processing request', error: e.stack });
+                    res = { status: 500 };
+                }
+                break;
             }
-            break;
         }
-    }
 
-    if (res === null) {
-        res = { status: 404, body: 'Not Found' };
-    }
+        if (res === null) {
+            res = { status: 404, body: 'Not Found' };
+        }
 
-    await req.respond(res);
-    log({ message: 'Returned HTTP Response', status: res.status });
+        await _req.respond(res);
+        log({ message: 'Returned HTTP Response', status: res.status });
+    } catch (e) {
+        log({ message: 'Error processing request', error: e.stack });
+    }
 }

@@ -1,34 +1,35 @@
 import { ServerRequest, Response } from 'https://deno.land/std/http/server.ts';
-import { setCookie, getCookies, delCookie } from 'https://deno.land/std/http/cookie.ts';
+import { setCookie, deleteCookie } from 'https://deno.land/std/http/cookie.ts';
 
-import { readFormData, redirectBack, redirect, assertAuth } from '../http.ts';
-import { query } from '../db.ts';
+import { getCookies, redirectBackOrOkay, redirect, assertAuth } from '../http.ts';
+import { sql, query } from '../db.ts';
 
-export const ping = async (req : ServerRequest) => {
+export const ping = async (req : Request) => {
   return { status: 200, body: 'pong' };
 }
 
-export const createUser = async (req : ServerRequest) => {
-  const data = await readFormData(req);
+export const createUser = async (req : Request) => {
+  const data = await req.formData();
 
   await query(
-    `insert into "users" ("username", "passwordHash")
-    values ($1, crypt($2, gen_salt('bf')))`,
-    data?.username, data?.password
+    sql`insert into "users" ("username", "passwordHash")
+    values (
+      ${data.get('username')},
+      crypt(${data.get('password')}, gen_salt('bf'))
+    )`,
   );
 
-  return redirectBack(req);
+  return redirectBackOrOkay(req);
 }
 
-export const createSession = async (req : ServerRequest) => {
-  const data = await readFormData(req);
+export const createSession = async (req : Request) => {
+  const data = await req.formData();
 
   const [ authRow ] = await query(
-    `select "userId" from "users"
+    sql`select "userId" from "users"
     where
-      "username" = $1
-      and "passwordHash" = crypt($2, "passwordHash")`,
-    data?.username, data?.password
+      "username" = ${data.get('username')}
+      and "passwordHash" = crypt(${data.get('password')}, "passwordHash")`,
   );
 
   if (!authRow) {
@@ -36,13 +37,14 @@ export const createSession = async (req : ServerRequest) => {
   }
 
   const [ tokenRow ] = await query(
-    `insert into "sessionTokens" ("userId")
-    values ($1)
+    sql`insert into "sessionTokens" ("userId")
+    values (${authRow.userId})
     returning "token", "expiresAt"`,
-    authRow.userId
   );
 
-  const response = redirect('/');
+  const response = req.headers.get('referer')
+    ? redirect('/')
+    : { status: 200 };
   setCookie(response, {
     name: 'tok',
     value: tokenRow.token,
@@ -53,78 +55,82 @@ export const createSession = async (req : ServerRequest) => {
   return response;
 }
 
-export const deleteSession = async (req : ServerRequest) => {
+export const deleteSession = async (req : Request) => {
   const cookies = getCookies(req);
 
   await query(
-      `delete from "sessionTokens"
-      where "token" = $1`, cookies.tok
+      sql`delete from "sessionTokens"
+      where "token" = ${cookies.tok}`
   );
 
-  const response = redirect('/');
-  delCookie(response, 'tok');
+  const response = req.headers.get('referer')
+    ? redirect('/')
+    : { status: 200 };
+  deleteCookie(response, 'tok');
 
   return response;
 };
 
-export const createPost = async (req : ServerRequest) => {
+export const createPost = async (req : Request) => {
   const user = await assertAuth(req);
-  const data = await readFormData(req);
+  const data = await req.formData();
 
   await query(
-    `insert into "posts" ("userId", "content") values ($1, $2)`,
-    user.userId, data?.content
+    sql`insert into "posts" ("userId", "content")
+    values (${user.userId}, ${data.get('content')})`,
   );
 
 
-  return redirectBack(req);
+  return redirectBackOrOkay(req);
 };
 
-export const createFollow = async (req : ServerRequest) => {
+export const createFollow = async (req : Request) => {
   const user = await assertAuth(req);
-  const data = await readFormData(req);
+  const data = await req.formData();
 
   await query(
-    `insert into "following" ("userId", "followingUserId") values ($1, $2)`,
-    user.userId, data?.userId
+    sql`insert into "following" ("userId", "followingUserId")
+    values (${user.userId}, ${data.get('userId')})`,
   );
 
-  return redirectBack(req);
+  return redirectBackOrOkay(req);
 };
 
-export const deleteFollow = async (req : ServerRequest) => {
+export const deleteFollow = async (req : Request) => {
   const user = await assertAuth(req);
-  const data = await readFormData(req);
+  const data = await req.formData();
 
   await query(
-    `delete from "following" where "userId" = $1 and "followingUserId" = $2`,
-    user.userId, data?.userId
+    sql`delete from "following"
+    where "userId" = ${user.userId}
+      and "followingUserId" = ${data.get('userId')}`,
   );
 
-  return redirectBack(req);
+  return redirectBackOrOkay(req);
 };
 
-export const createPostReaction = async (req : ServerRequest) => {
+export const createPostReaction = async (req : Request) => {
   const user = await assertAuth(req);
-  const data = await readFormData(req);
+  const data = await req.formData();
 
   await query(
-    `insert into "postReactions" ("postId", "userId", "type")
-    values ($1, $2, $3)`,
-    data?.postId, user.userId, data?.type
+    sql`insert into "postReactions" ("postId", "userId", "type")
+    values (${data.get('postId')}, ${user.userId}, ${data.get('type')})`,
   );
 
-  return redirectBack(req);
+  return redirectBackOrOkay(req);
 };
 
-export const deletePostReaction = async (req : ServerRequest) => {
+export const deletePostReaction = async (req : Request) => {
   const user = await assertAuth(req);
-  const data = await readFormData(req);
+  const data = await req.formData();
 
   await query(
-    `delete from "postReactions" where "postId"=$1 and "userId"=$2 and "type"=$3`,
-    data?.postId, user.userId, data?.type
+    sql`delete from "postReactions"
+    where "postId"=${data.get('postId')}
+      and "userId"=${user.userId}
+      and "type"=${data.get('type')}`,
   );
 
-  return redirectBack(req);
+  return redirectBackOrOkay(req);
 };
