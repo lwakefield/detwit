@@ -32,7 +32,7 @@ export class QueryPart {
                 const q = part.toSQL(count);
                 sql += q.sql;
                 bindings.push(...q.bindings);
-            } else if (this.bindings[i]) {
+            } else if (typeof this.bindings[i] !== 'undefined') {
                 count.value += 1
                 sql += `$${count.value}`;
                 bindings.push(this.bindings[i]);

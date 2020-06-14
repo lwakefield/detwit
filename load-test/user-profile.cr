@@ -33,7 +33,7 @@ class UserProfile
 			make_transition("feed",      "make_post", ),
 			make_transition("make_post", "feed",      ),
 
-			make_transition("feed",      "like_post", ),
+			make_transition("feed",      "like_post", predicate: ->can_like_post),
 			make_transition("like_post", "feed",      ),
 
 			make_transition("feed",      "user_page", predicate: ->can_goto_user_page),
@@ -104,6 +104,12 @@ class UserProfile
 		)
 
 		nil
+	end
+
+	def can_like_post
+		inputs = @html.not_nil!.xpath("//form[@action=\"/api/v1/createpostreaction\"]//input[@name=\"postId\"]/@value")
+
+		return inputs.is_a?(XML::NodeSet) && inputs.size > 0
 	end
 
 	def like_post

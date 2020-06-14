@@ -14,7 +14,12 @@ export const index = async (req : Request) => {
   const before = url.searchParams.get('before') || 'infinity';
   const after = url.searchParams.get('after') || '-infinity';
 
-  let posts: {}[] = await query(queries.allPosts(user?.userId, before, after));
+const q = queries.allPosts(
+    user?.userId || null,
+    before,
+    after
+  )
+  let posts: {}[] = await query(q);
 
   return {
     body: await renderFile(`routes/frontend/index.ejs`, { posts, currentUser: user })
@@ -71,6 +76,11 @@ export const userFeed = async (req : Request) => {
   const userQuery = query(queries.user(me?.userId, username));
 
   // TODO
+const q = queries.feed(sql`
+    (select "userId" from "users" where "username"=${username})
+  `, me?.userId || null)
+  const feedQuery = query(q);
+  console.log(q.toSQL().sql);
   const postsQuery = query(queries.allPosts(
     me?.userId,
     before,
@@ -80,11 +90,16 @@ export const userFeed = async (req : Request) => {
           select "followingUserId" from "following"
           where "userId" = (select "userId" from "users" where "username" = ${username})
         )`
-  ))
+  ));
 
-  const [ [ user ], posts ] = await Promise.all([ userQuery, postsQuery ]);
+
+  const [ [ user ], posts, feed ] = await Promise.all([
+    userQuery,
+    postsQuery,
+    feedQuery
+  ]);
 
   return {
-    body: await renderFile(`routes/frontend/user-feed.ejs`, { user, posts, currentUser: me })
+    body: await renderFile(`routes/frontend/user-feed.ejs`, { user, posts, feed, currentUser: me })
   };
 };

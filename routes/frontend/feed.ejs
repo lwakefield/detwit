@@ -1,0 +1,18 @@
+<% for (const item of feed) { %>
+  <% if (item.type === 'reaction') { %>
+    <div>
+      <div><%= item.entry.actor.username %> reacted with <%= item.entry.reactionType %> to:</div>
+      <div style="padding-left: 10px;">
+        <%- await include('./routes/frontend/post.ejs', { post: item.entry.post }) %>
+      </div>
+    </div>
+  <% } %>
+<% } %>
+
+<% if (feed.length === 0) { %>
+    <p>There is nothing being said at this time...</p>
+<% } %>
+
+<p>hello</p>
+
+<br />

@@ -1,4 +1,4 @@
-import { init } from '../db.ts';
+import { client, init } from '../db.ts';
 
 await init();
 // transparency - you should be able to see who XX followed at a given time
@@ -138,4 +138,29 @@ await client.query(`
        from "postReactions"
        group by "postId", "userId"
    );
+
+   create or replace function userJSON(integer) returns json
+   as $$ select json_build_object(
+     'userId', "users"."userId",
+     'displayName', "users"."displayName",
+     'username', "users"."username"
+   )
+   from "users" where "userId" = $1
+   $$ language sql;
+
+   create or replace function postJSON(integer, integer) returns json
+   as $$ select json_build_object(
+     'postId', "posts"."postId",
+     'content', "posts"."content",
+     'author', userJSON("posts"."userId"),
+     'reactionCounts', "apiPostsAllReactions"."reactionCounts",
+     'myReactions', coalesce("apiPostsUserReactions"."counts", '{}'::json)
+   )
+   from "posts"
+   left join "apiPostsAllReactions" using ("postId")
+   left join "apiPostsUserReactions"
+     on "apiPostsUserReactions"."userId" = $2
+     and "apiPostsUserReactions"."postId" = "posts"."postId"
+   where "posts"."postId" = $1
+   $$ language sql;
 `);

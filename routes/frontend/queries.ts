@@ -1,21 +1,13 @@
 import { sql, QueryPart } from '../../db.ts';
 
-export const feed = (userId : number) => sql`
+export const feed = (userId : number | QueryPart, myUserId : number | null) => sql`
   select 
       "posts"."createdAt",
       "following"."userId",
       'post' as "type",
-      json_build_object(
-          'postId', "posts"."postId",
-          'content', "posts"."content",
-          'author', json_build_object(
-              'displayName', "author"."displayName",
-              'username', "author"."username"
-          )
-      ) as "entry"
+      postJSON("posts"."postId", ${myUserId}) as "entry"
   from "following"
   join "posts" on "posts"."userId" = "followingUserId"
-  join "users" as "author" on "posts"."userId" = "author"."userId"
   where "following"."userId" = ${userId}
 
   union all
@@ -25,17 +17,12 @@ export const feed = (userId : number) => sql`
       "following"."userId",
       'reaction' as "type",
       json_build_object(
-          'postId', "posts"."postId",
-          'content', "posts"."content",
-          'author', json_build_object(
-              'displayName', "author"."displayName",
-              'username', "author"."username"
-          )
+          'post', postJSON("postReactions"."postId", ${myUserId}),
+          'reactionType', "postReactions"."type",
+          'actor', userJSON("postReactions"."userId")
       ) as "entry"
   from "following"
   join "postReactions" on "postReactions"."userId" = "followingUserId"
-  join "posts"         on "posts"."postId" = "postReactions"."postId"
-  join "users" as "author" on "posts"."userId" = "author"."userId"
   where "following"."userId" = ${userId}
 
   order by "createdAt" desc

@@ -18,6 +18,7 @@
 <p><em>This is how <%= user.username %> sees the world.</em></p>
 <br />
 
-<%- await include('./routes/frontend/posts.ejs', { posts }) %>
+<%- /* await include('./routes/frontend/posts.ejs', { posts }) */ %>
+<%-  await include('./routes/frontend/feed.ejs', { feed })  %>
 
 <%- await include('./routes/frontend/footer.ejs') %>
